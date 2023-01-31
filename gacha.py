@@ -95,11 +95,23 @@ def AddBaileyToResults(bailey : Unit, user: str) -> None:
     list.append(baileys.index(bailey))
     results.update({user : list})
 
-def GetResults(user : str) -> str:
+def GetResults(user : str,page : int) -> str:
     if user in results:
         output = ""
-        for i in results[user]:
-            output += baileys[i].name + "\n" + baileys[i].url + "\n"
+        baileyList = results[user]
+        if(len(baileyList) % 5 == 0):
+            pageCount = len(baileyList) / 5
+        else:
+            pageCount = (len(baileyList) // 5) + 1
+        if page > pageCount or page < 1:
+            return "Page " + str(page) + " does not exist!"
+
+        output += "Page " + str(page) + " of " + str(pageCount) + "\n"
+
+        for i in range((page - 1) * 5,min(page * 5,len(baileyList))):
+            bailey = baileyList[i]
+            output += baileys[bailey].name + "\n" + baileys[bailey].url + "\n"
+
         return output
     else:
         return "You dont have any baileys yet!"
