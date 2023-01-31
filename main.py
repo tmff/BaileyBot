@@ -42,8 +42,19 @@ def run():
         await ctx.reply(gacha.GetResults(str(user),page))
 
     @client.command()
+    async def baileycollection(ctx):
+        user = ctx.author
+        splitArray = ctx.message.content.split(' ')
+        try:
+            page = int(splitArray[1])
+        except:
+            page = 1
+        await ctx.reply(gacha.GetResults(str(user),page))
+
+    @client.command()
     async def b(message):
         user = message.author
+        
         print(user)
         await message.reply('Rolling for Bailey!')
         ctx = await message.reply(":)")
@@ -71,6 +82,11 @@ def run():
             case gacha.MYTHICAL:
                 await message.reply(content="Oh my gosh!!!!!!!! I can't believe it...? the rarest bailey EVER????? you got the MYTHICAL " + bailey.name + '!')
         gacha.AddBaileyToResults(bailey,str(user))
+
+    @client.command()
+    async def baileybattle(message):
+        return
+
 
     load_dotenv()
     client.run(os.getenv("TOKEN"))
