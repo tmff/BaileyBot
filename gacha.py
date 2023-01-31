@@ -1,6 +1,7 @@
 import json
 import random
 
+
 COMMON = 1
 RARE = 2
 EPIC = 3
@@ -47,6 +48,7 @@ def loadBaileys():
     baileys.append(Unit("Ghost Bailey","https://cdn.discordapp.com/attachments/1039213143903182939/1068298663895502958/321910802_1408591113274077_2086779536172306200_n.png",MYTHICAL))
     baileys.append(Unit("Leaning Bailey ft Sam","https://cdn.discordapp.com/attachments/1039213143903182939/1068298794980085800/322464833_548204903874158_576126474742874050_n.png",RARE))
     baileys.append(Unit("Stinky Bailey","https://cdn.discordapp.com/attachments/1039213143903182939/1068298897245614160/321021612_952434979070030_8839148083040989088_n.png",LEGENDARY))
+    baileys.append(Unit("What the hell is that Bailey","https://cdn.discordapp.com/attachments/1039213143903182939/1069567114458972210/IMG_8463.jpg",MYTHICAL))
 
 
 
@@ -75,7 +77,7 @@ def GetRandomBaileyForRarity(rarity : int) -> Unit:
             list.append(i)
     if len(list) == 0:
         return baileys[5]
-    return list[random.randint(0,len(list))]
+    return list[random.randint(0,len(list) - 1)]
 
 def WriteResultsToFile(dict):
     with open("results.txt","w") as f:
