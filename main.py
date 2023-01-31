@@ -59,7 +59,7 @@ def run():
         await message.reply('Rolling for Bailey!')
         ctx = await message.reply(":)")
         ##do roll
-        bailey = gacha.RollForBailey()
+        bailey = gacha.RollForBailey("fart")
         star = ''
         for i in range(0,bailey.rarity):
             if i > 3:
