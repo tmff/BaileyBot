@@ -3,6 +3,7 @@ import random
 from enum import Enum
 from dataclasses import dataclass
 import time
+import jsonpickle
 
 class Element(Enum):
     SILLY = 1
@@ -29,6 +30,11 @@ class User:
         self.userid = userid
         self.units = units
         self.lastRollUnix = lastRollUnix
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
+
+
 
 
 def loadBaileys():
@@ -69,8 +75,16 @@ def loadBaileys():
 
 
 
-def RollForBailey(user : str) -> Unit:
-
+def RollForBailey(userid : str) -> Unit | int:
+    if userid not in users:
+        users[userid] = User(userid,[],0)
+    user = users[userid]
+    lastRoll = user.lastRollUnix
+    print(lastRoll)
+    currentTime = int(time.time())
+    if currentTime - lastRoll < 3600:
+        return lastRoll + 3600
+    user.lastRollUnix = currentTime
     num = random.randint(0,100)
     if num < 60:
         return GetRandomBaileyForRarity(COMMON)
@@ -94,26 +108,42 @@ def GetRandomBaileyForRarity(rarity : int) -> Unit:
         return baileys[5]
     return list[random.randint(0,len(list) - 1)]
 
-def WriteResultsToFile(dict):
+
+class Wrapper:
+    def __init__(self):
+        self.users = []
+
+def WriteResultsToFile(users : dict):
+    out = []
+    for i in users:
+        out.append(jsonpickle.encode(users[i]))
+
+    wr = Wrapper()
+    wr.users = out
     with open("results.txt","w") as f:
-        f.write(json.dumps(dict))
+        f.write(jsonpickle.encode(wr))
         
 def LoadResultsFromFile() -> dict:
     with open("results.txt","r") as f:
-        return json.loads(f.read())
+        newDict = {}
+        wr = jsonpickle.decode(f.read())
+        for i in wr.users:
+            user = jsonpickle.decode(i)
+            newDict.update({user.userid : user})
+        return newDict
 
 
 def AddBaileyToResults(bailey : Unit, user: str) -> None:
     if user not in users:
         users.update({user : User(user,[],time.time())})
     ##list = results[user]
-    user = users[user]
-    user.units.append(baileys.index(bailey))
+    newUser = users[user]
+    newUser.units.append(baileys.index(bailey))
 
 def GetResults(user : str,page : int) -> str:
-    if user in results:
+    if user in users:
         output = ""
-        baileyList = results[user]
+        baileyList = users[user].units
         if(len(baileyList) % 5 == 0):
             pageCount = len(baileyList) / 5
         else:
@@ -146,7 +176,7 @@ def BattleBaileys(turn1 : Turn, turn2: Turn) -> Turn:
             if turn2.bailey.element == Element.GRUMPY:
                 return turn1
             elif turn2.bailey.element == Element.SLEEPY:
-                if turn1.amount > turn2.amount:
+                if turn1.amount >= turn2.amount:
                     return turn1
                 else:
                     return turn2
@@ -166,7 +196,7 @@ def BattleBaileys(turn1 : Turn, turn2: Turn) -> Turn:
             if turn2.bailey.element == Element.GRUMPY:
                 return turn2
             elif turn2.bailey.element == Element.SILLY:
-                if turn1.amount > turn2.amount:
+                if turn1.amount >= turn2.amount:
                     return turn1
                 else:
                     return turn2
@@ -175,11 +205,20 @@ def BattleBaileys(turn1 : Turn, turn2: Turn) -> Turn:
 
 
 
+def GetRandomBaileyFromUser(user : str):
+    if user not in users or len(users[user].units) == 0:
+        return (baileys[5],1)
+    userBaileys = users[user].units
+    singleBaileyList = list(dict.fromkeys(users[user].units))
+    unit = baileys[singleBaileyList[random.randint(0,len(singleBaileyList) - 1)]]
+    amount = userBaileys.count(baileys.index(unit)) * unit.rarity
+    return (unit,amount)
+
 
 testUser = User("tmf#0001",[0],0)
 
 users = {
-    "tmf#0001" : testUser
+    
 }
 
 ###
@@ -190,5 +229,6 @@ baileys = []
 loadBaileys()
 print("Baileys loaded")
 print("Loading results from file")
-results = LoadResultsFromFile()
+users = LoadResultsFromFile()
 print("Results loaded from file")
+users.update({"tmf#0001" : testUser})
