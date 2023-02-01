@@ -9,7 +9,14 @@ class Element(Enum):
     SILLY = 1
     GRUMPY = 2
     SLEEPY = 3
-
+    def __str__(self):
+        match self:
+            case Element.SILLY:
+                return "<:silly:1070146370817769472> Silly <:silly:1070146370817769472>"
+            case Element.GRUMPY:
+                return "<:grumpy:1070146403868872704> Grumpy <:grumpy:1070146403868872704>"
+            case Element.SLEEPY:
+                return "<:eepy:1070146389570494585> Sleepy <:eepy:1070146389570494585>"
 
 COMMON = 1
 RARE = 2
@@ -82,8 +89,8 @@ def RollForBailey(userid : str) -> Unit | int:
     lastRoll = user.lastRollUnix
     print(lastRoll)
     currentTime = int(time.time())
-    if currentTime - lastRoll < 3600:
-        return lastRoll + 3600
+    if currentTime - lastRoll < 1800:
+        return lastRoll + 1800
     user.lastRollUnix = currentTime
     num = random.randint(0,100)
     if num < 60:
@@ -176,8 +183,13 @@ def BattleBaileys(turn1 : Turn, turn2: Turn) -> Turn:
             if turn2.bailey.element == Element.GRUMPY:
                 return turn1
             elif turn2.bailey.element == Element.SLEEPY:
-                if turn1.amount >= turn2.amount:
+                if turn1.amount > turn2.amount:
                     return turn1
+                elif turn1.amount == turn2.amount:
+                    if random.choice([True,False]):
+                        return turn1
+                    else:
+                        return turn2
                 else:
                     return turn2
             else:
@@ -188,6 +200,11 @@ def BattleBaileys(turn1 : Turn, turn2: Turn) -> Turn:
             elif turn2.bailey.element == Element.GRUMPY:
                 if turn1.amount > turn2.amount:
                     return turn1
+                elif turn1.amount == turn2.amount:
+                    if random.choice([True,False]):
+                        return turn1
+                    else:
+                        return turn2
                 else:
                     return turn2
             else:
@@ -196,8 +213,13 @@ def BattleBaileys(turn1 : Turn, turn2: Turn) -> Turn:
             if turn2.bailey.element == Element.GRUMPY:
                 return turn2
             elif turn2.bailey.element == Element.SILLY:
-                if turn1.amount >= turn2.amount:
+                if turn1.amount > turn2.amount:
                     return turn1
+                elif turn1.amount == turn2.amount:
+                    if random.choice([True,False]):
+                        return turn1
+                    else:
+                        return turn2
                 else:
                     return turn2
             else:

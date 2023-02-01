@@ -89,6 +89,10 @@ def run():
     async def baileyBattle(ctx):
         user = ctx.author
         if user in pendingBattles:
+            for i in ongoingBattles:
+                if i.player1 == user or i.player2 == user:
+                    await ctx.reply("You are already in a battle!")
+                    return
             await ctx.reply("You already have a pending battle request! Please cancel it with !cancelBattle")
             return
         if(ctx.message.mentions[0] == user):
@@ -102,7 +106,7 @@ def run():
         await ctx.reply("Battle request sent to " + str(userToBattle) + "!")
 
     @client.command()
-    async def cancelBattle(message):
+    async def cancelPendingBattle(message):
         user = message.author
         pendingBattles.pop(str(user))
         await message.reply("Battle request cancelled!")
@@ -122,13 +126,14 @@ def run():
                 await ctx.reply("Battle accepted!")
                 await ctx.channel.send("Battle between " + str(user) + " and " + str(userWithRequest) + " is starting!")
                 await ctx.channel.send("Bailey bot will each send you a dm with your hand, select a card to play by selecting the corresponding number! Once both players have sent their cards, the round will commence! first to 3 wins!")
+                await ctx.channel.send("https://cdn.discordapp.com/attachments/1039213143903182939/1070143487514771486/IMG_2357.jpg")
                 player1Hand = []
                 player2Hand = []
-                for i in range(0,5):
+                for i in range(0,7):
                     unit1 = gacha.GetRandomBaileyFromUser(str(player1))
                     unit2 = gacha.GetRandomBaileyFromUser(str(player2))
-                    await player1.send(str(i + 1) + ": " + unit1[0].name + "\nPower: " + str(unit1[1])+ " \n"+ unit1[0].url)
-                    await player2.send(str(i + 1) + ": " + unit2[0].name + "\nPower: " + str(unit2[1])+ " \n"+ unit2[0].url)
+                    await player1.send(str(i + 1) + ": " + unit1[0].name + "\nPower: " + str(unit1[1])+" Element:" + str(unit1[0].element) + " \n"+ unit1[0].url)
+                    await player2.send(str(i + 1) + ": " + unit2[0].name + "\nPower: " + str(unit2[1])+" Element:" + str(unit2[0].element) + " \n"+ unit2[0].url)
                     player1Hand.append(unit1)
                     player2Hand.append(unit2)
                 battle = Battle(player1,player2,ctx.channel)
@@ -166,8 +171,8 @@ def run():
                 except:
                     await i.player1.send("Please enter a valid number!")
                     return
-                if val > 5 or val < 1:
-                    await i.player1.send("Please enter a number less than 5 and greater than 1!")
+                if val > 7 or val < 1:
+                    await i.player1.send("Please enter a number less than 8 and greater than 1!")
                     return
                 if val in i.player1UsedCards:
                     await i.player1.send("You have already used that card!")
@@ -181,8 +186,8 @@ def run():
                 except:
                     await i.player2.send("Please enter a valid number!")
                     return
-                if val > 5 or val < 1:
-                    await i.player2.send("Please enter a number less than 5 and greater than 1!")
+                if val > 7 or val < 1:
+                    await i.player2.send("Please enter a number less than 8 and greater than 1!")
                     return
                 if val in i.player2UsedCards:
                     await i.player2.send("You have already used that card!")
@@ -190,6 +195,8 @@ def run():
                 i.player2UsedCards.append(val)
                 i.player2Choice = val
             if i.player1Choice != -1 and i.player2Choice != -1:
+                print("Player 1 Chosen Cards: " + str(i.player1UsedCards))
+                print("Player 2 Chosen Cards: " + str(i.player2UsedCards))
                 await handleBattle(i)
             else:
                 await ctx.reply("Waiting for other player to make a choice...")
@@ -203,6 +210,45 @@ def run():
         temp = battle.player2Hand[battle.player2Choice - 1]
         turn2 = gacha.Turn(battle.player2,temp[0],temp[1])
         
+        await battle.channel.send(str(turn1.player) + " played " + str(turn1.bailey.name) + " with power " + str(turn1.amount) + "\n " + turn1.bailey.url)
+        await battle.channel.send(str(turn2.player) + " played " + str(turn2.bailey.name) + " with power " + str(turn2.amount) + "\n " + turn2.bailey.url)
+
+        match turn1.bailey.element:
+            case gacha.Element.SLEEPY:
+                if turn2.bailey.element == gacha.Element.SLEEPY:
+                    await battle.channel.send("Both players played sleepy cards!")
+                    if turn1.amount > turn2.amount:
+                        await battle.channel.send(turn1.bailey.name + " is more sleepy than " + turn2.bailey.name + "!")
+                    else:
+                        await battle.channel.send(turn2.bailey.name + " is more sleepy than " + turn1.bailey.name + "!")
+                elif turn2.bailey.element == gacha.Element.SILLY:
+                    await battle.channel.send(turn2.bailey.name + " is too silly to be sleepy!")
+                elif turn2.bailey.element == gacha.Element.GRUMPY:
+                    await battle.channel.send(turn1.bailey.name + " is too sleepy to be grumpy!")
+            case gacha.Element.SILLY:
+                if turn2.bailey.element == gacha.Element.SILLY:
+                    await battle.channel.send("Both players played silly cards!")
+                    if turn1.amount > turn2.amount:
+                        await battle.channel.send(turn1.bailey.name + " is more silly than " + turn2.bailey.name + "!")
+                    else:
+                        await battle.channel.send(turn2.bailey.name + " is more silly than " + turn1.bailey.name + "!")
+                elif turn2.bailey.element == gacha.Element.GRUMPY:
+                    await battle.channel.send(turn2.bailey.name + " is too grumpy to be silly!")
+                elif turn2.bailey.element == gacha.Element.SLEEPY:
+                    await battle.channel.send(turn1.bailey.name + " is too silly to be sleepy!")
+            case gacha.Element.GRUMPY:
+                if turn2.bailey.element == gacha.Element.GRUMPY:
+                    await battle.channel.send("Both players played grumpy cards!")
+                    if turn1.amount > turn2.amount:
+                        await battle.channel.send(turn1.bailey.name + " is more grumpy than " + turn2.bailey.name + "!")
+                    else:
+                        await battle.channel.send(turn2.bailey.name + " is more grumpy than " + turn1.bailey.name + "!")
+                elif turn2.bailey.element == gacha.Element.SLEEPY:
+                    await battle.channel.send(turn2.bailey.name + " is too sleepy to be grumpy!")
+                elif turn2.bailey.element == gacha.Element.SILLY:
+                    await battle.channel.send(turn1.bailey.name + " is too grumpy to be silly!")
+
+        time.sleep(2)
         winner = gacha.BattleBaileys(turn1,turn2)
         print(str(winner.player))
         await battle.channel.send(str(winner.player) + " won the round!")
@@ -210,15 +256,33 @@ def run():
             battle.player1Points += 1
             if battle.player1Points == 3:
                 await battle.channel.send(str(battle.player1) + " won the battle!")
-                ongoingBattles.remove(battle)
+                battle.player1UsedCards = []
+                battle.player2UsedCards = []
+                
+                for i in ongoingBattles:
+                    if i.player1 == battle.player1 and i.player2 == battle.player2:
+                        ongoingBattles.remove(i)
+
                 return
         else:
             battle.player2Points += 1
             if battle.player2Points == 3:
                 await battle.channel.send(str(battle.player2) + " won the battle!")
-                ongoingBattles.remove(battle)
+                for i in ongoingBattles:
+                    if i.player1 == battle.player1 and i.player2 == battle.player2:
+                        ongoingBattles.remove(i)
+
                 return
         await roundStart(battle)
+
+    @client.command()
+    async def cancelBattle(ctx):
+        for i in ongoingBattles:
+            if ctx.author == i.player1 or ctx.author == i.player2:
+                await ctx.reply("Battle cancelled!")
+                ongoingBattles.remove(i)
+
+                
         
 
     load_dotenv()
