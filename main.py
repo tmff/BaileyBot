@@ -140,7 +140,8 @@ def run():
                 battle.player1Hand = player1Hand
                 battle.player2Hand = player2Hand
                 battle.canChoose = True
-                ongoingBattles.append(battle)
+                ongoingBattles.update({battle.player1:battle})
+                ongoingBattles.update({battle.player2:battle})
                 await player1.send("Please select a card to play by typing !choose [number]")
                 await player2.send("Please select a card to play by typing !choose [number]")
             else:
@@ -161,46 +162,49 @@ def run():
 
     @client.command()
     async def choose(ctx):
-        for i in ongoingBattles:
-            if i.canChoose == False:
-                continue
-            if ctx.author == i.player1:
-                val = -1
-                try:
-                    val = int(ctx.message.content.split(' ')[1])
-                except:
-                    await i.player1.send("Please enter a valid number!")
-                    return
-                if val > 7 or val < 1:
-                    await i.player1.send("Please enter a number less than 8 and greater than 1!")
-                    return
-                if val in i.player1UsedCards:
-                    await i.player1.send("You have already used that card!")
-                    return
-                i.player1UsedCards.append(val)
-                i.player1Choice = val
-            elif ctx.author == i.player2:
-                val = -1
-                try:
-                    val = int(ctx.message.content.split(' ')[1])
-                except:
-                    await i.player2.send("Please enter a valid number!")
-                    return
-                if val > 7 or val < 1:
-                    await i.player2.send("Please enter a number less than 8 and greater than 1!")
-                    return
-                if val in i.player2UsedCards:
-                    await i.player2.send("You have already used that card!")
-                    return
-                i.player2UsedCards.append(val)
-                i.player2Choice = val
-            if i.player1Choice != -1 and i.player2Choice != -1:
-                print("Player 1 Chosen Cards: " + str(i.player1UsedCards))
-                print("Player 2 Chosen Cards: " + str(i.player2UsedCards))
-                await handleBattle(i)
-            else:
-                await ctx.reply("Waiting for other player to make a choice...")
+        if ctx.author not in ongoingBattles:
+            await ctx.reply("You are not in a battle!")
+            return
+        i = ongoingBattles[ctx.author]
+        if i.canChoose == False:
+            return
+        if ctx.author == i.player1:
+            val = -1
+            try:
+                val = int(ctx.message.content.split(' ')[1])
+            except:
+                await i.player1.send("Please enter a valid number!")
                 return
+            if val > 7 or val < 1:
+                await i.player1.send("Please enter a number less than 8 and greater than 1!")
+                return
+            if val in i.player1UsedCards:
+                await i.player1.send("You have already used that card!")
+                return
+            i.player1UsedCards.append(val)
+            i.player1Choice = val
+        elif ctx.author == i.player2:
+            val = -1
+            try:
+                val = int(ctx.message.content.split(' ')[1])
+            except:
+                await i.player2.send("Please enter a valid number!")
+                return
+            if val > 7 or val < 1:
+                await i.player2.send("Please enter a number less than 8 and greater than 1!")
+                return
+            if val in i.player2UsedCards:
+                await i.player2.send("You have already used that card!")
+                return
+            i.player2UsedCards.append(val)
+            i.player2Choice = val
+        if i.player1Choice != -1 and i.player2Choice != -1:
+            print("Player 1 Chosen Cards: " + str(i.player1UsedCards))
+            print("Player 2 Chosen Cards: " + str(i.player2UsedCards))
+            await handleBattle(i)
+        else:
+            await ctx.reply("Waiting for other player to make a choice...")
+            return
 
     async def handleBattle(battle):
         battle.canChoose = False
@@ -256,31 +260,31 @@ def run():
             battle.player1Points += 1
             if battle.player1Points == 3:
                 await battle.channel.send(str(battle.player1) + " won the battle!")
-                battle.player1UsedCards = []
-                battle.player2UsedCards = []
-                
-                for i in ongoingBattles:
-                    if i.player1 == battle.player1 and i.player2 == battle.player2:
-                        ongoingBattles.remove(i)
 
+                ongoingBattles.pop(battle.player1)
+                ongoingBattles.pop(battle.player2)
                 return
         else:
             battle.player2Points += 1
             if battle.player2Points == 3:
                 await battle.channel.send(str(battle.player2) + " won the battle!")
-                for i in ongoingBattles:
-                    if i.player1 == battle.player1 and i.player2 == battle.player2:
-                        ongoingBattles.remove(i)
+
+                ongoingBattles.pop(battle.player1)
+                ongoingBattles.pop(battle.player2)
 
                 return
         await roundStart(battle)
 
     @client.command()
     async def cancelBattle(ctx):
-        for i in ongoingBattles:
-            if ctx.author == i.player1 or ctx.author == i.player2:
-                await ctx.reply("Battle cancelled!")
-                ongoingBattles.remove(i)
+        if ctx.author in ongoingBattles:
+            await ctx.reply("Battle cancelled!")
+            battle = ongoingBattles[ctx.author]
+            ongoingBattles.pop(battle.player1)
+            ongoingBattles.pop(battle.player2)
+            return
+        await ctx.reply("You are not in a battle!")
+        
 
                 
         
@@ -289,24 +293,25 @@ def run():
     client.run(os.getenv("TOKEN"))
 
 
-@dataclass
+
 class Battle:
-    player1: discord.User
-    player2: discord.User
-    channel: discord.TextChannel
-    player1Points: int = 0
-    player2Points: int = 0
-    player1Hand = []
-    player2Hand = []
-    player1UsedCards = []
-    player2UsedCards = []
-    player1Choice = -1
-    player2Choice = -1
-    canChoose = False
+    def __init__(self, player1, player2, channel):
+        self.player1 = player1
+        self.player2 = player2
+        self.channel = channel
+        self.player1Points = 0
+        self.player2Points = 0
+        self.player1Hand = []
+        self.player2Hand = []
+        self.player1UsedCards = []
+        self.player2UsedCards = []
+        self.player1Choice = -1
+        self.player2Choice = -1
+        self.canChoose = False
 
 pendingBattles = {}
 
-ongoingBattles = []
+ongoingBattles = {}
 
 
 
