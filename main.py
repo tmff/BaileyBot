@@ -30,7 +30,7 @@ def run():
 
 
         
-    @client.command()
+    @client.command(aliases = ['baileyCollection','BaileyCollection','baileys'])
     async def bc(ctx):
         user = ctx.author
         splitArray = ctx.message.content.split(' ')
@@ -40,15 +40,7 @@ def run():
             page = 1
         await ctx.reply(gacha.GetResults(str(user),page))
 
-    @client.command()
-    async def baileycollection(ctx):
-        user = ctx.author
-        splitArray = ctx.message.content.split(' ')
-        try:
-            page = int(splitArray[1])
-        except:
-            page = 1
-        await ctx.reply(gacha.GetResults(str(user),page))
+
 
     @client.command()
     async def b(message):
@@ -85,8 +77,11 @@ def run():
                 await message.reply(content="Oh my gosh!!!!!!!! I can't believe it...? the rarest bailey EVER????? you got the MYTHICAL " + bailey.name + '!')
         gacha.AddBaileyToResults(bailey,str(user))
 
-    @client.command()
+    @client.command(aliases = ['bb','BaileyBattle','baileybattle','Baileybattle','battleBailey','BattleBailey','battlebailey'])
     async def baileyBattle(ctx):
+        if len(ctx.message.mentions) == 0:
+            await ctx.reply("Please mention a user to battle!")
+            return
         user = ctx.author
         if user in pendingBattles:
             for i in ongoingBattles:
@@ -105,14 +100,14 @@ def run():
         pendingBattles.update({str(user):str(userToBattle)})
         await ctx.reply("Battle request sent to " + str(userToBattle) + "!")
 
-    @client.command()
+    @client.command(aliases = ['cb','cancelPBattle','cancelpbattle'])
     async def cancelPendingBattle(message):
         user = message.author
         pendingBattles.pop(str(user))
         await message.reply("Battle request cancelled!")
         
 
-    @client.command()
+    @client.command(aliases = ['ab','acceptbattle','AcceptBattle'])
     async def acceptBattle(ctx):
         user = ctx.author
         userWithRequest = ctx.message.mentions[0]
@@ -160,7 +155,7 @@ def run():
 
 
 
-    @client.command()
+    @client.command(aliases = ['Choose','c'])
     async def choose(ctx):
         if ctx.author not in ongoingBattles:
             await ctx.reply("You are not in a battle!")
